@@ -120,15 +120,6 @@ class Transitioner extends React.Component {
           ]
         : [];
 
-    // When there are no animations happening, avoid calling onTransitionStart/End.
-    // This is important because the stack navigator fires the completion prop when
-    // the transition is ended.
-    if (!animations.length) {
-      this._isTransitionRunning = false;
-      this.setState(nextState);
-      return;
-    }
-
     // update scenes and play the transition
     this._isTransitionRunning = true;
     this.setState(nextState, async () => {
@@ -188,9 +179,19 @@ class Transitioner extends React.Component {
     const prevTransitionProps = this._prevTransitionProps;
     this._prevTransitionProps = null;
 
+    const scenes = this.state.scenes.filter(isSceneNotStale);
+
     const nextState = {
       ...this.state,
-      scenes: this.state.scenes.filter(isSceneNotStale),
+      /**
+       * Array.prototype.filter creates a new instance of an array
+       * even if there were no elements removed. There are cases when
+       * `this.state.scenes` will have no stale scenes (typically when
+       * pushing a new route). As a result, components that rely on this prop
+       * might enter an unnecessary render cycle.
+       */
+      scenes:
+        this.state.scenes.length === scenes.length ? this.state.scenes : scenes,
     };
 
     this._transitionProps = buildTransitionProps(this.props, nextState);

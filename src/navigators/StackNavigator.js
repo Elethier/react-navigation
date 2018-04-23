@@ -11,10 +11,12 @@ import NavigationActions from '../NavigationActions';
 
 export default (routeConfigMap, stackConfig = {}) => {
   const {
+    initialRouteKey,
     initialRouteName,
     initialRouteParams,
     paths,
     headerMode,
+    headerTransitionPreset,
     mode,
     cardStyle,
     transitionConfig,
@@ -24,6 +26,7 @@ export default (routeConfigMap, stackConfig = {}) => {
   } = stackConfig;
 
   const stackRouterConfig = {
+    initialRouteKey,
     initialRouteName,
     initialRouteParams,
     paths,
@@ -38,14 +41,15 @@ export default (routeConfigMap, stackConfig = {}) => {
       <CardStackTransitioner
         {...props}
         headerMode={headerMode}
+        headerTransitionPreset={headerTransitionPreset}
         mode={mode}
         cardStyle={cardStyle}
         transitionConfig={transitionConfig}
         onTransitionStart={onTransitionStart}
         onTransitionEnd={(lastTransition, transition) => {
           const { state, dispatch } = props.navigation;
-          dispatch(NavigationActions.completeTransition());
-          onTransitionEnd && onTransitionEnd();
+          dispatch(NavigationActions.completeTransition({ key: state.key }));
+          onTransitionEnd && onTransitionEnd(lastTransition, transition);
         }}
       />
     )

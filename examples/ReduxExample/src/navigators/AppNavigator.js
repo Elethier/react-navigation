@@ -2,10 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { addNavigationHelpers, StackNavigator } from 'react-navigation';
+import { initializeListeners } from 'react-navigation-redux-helpers';
 
 import LoginScreen from '../components/LoginScreen';
 import MainScreen from '../components/MainScreen';
 import ProfileScreen from '../components/ProfileScreen';
+import { addListener } from '../utils/redux';
 
 export const AppNavigator = StackNavigator({
   Login: { screen: LoginScreen },
@@ -19,26 +21,8 @@ class AppWithNavigationState extends React.Component {
     nav: PropTypes.object.isRequired,
   };
 
-  _actionEventSubscribers = new Set();
-
-  _addListener = (eventName, handler) => {
-    eventName === 'action' && this._actionEventSubscribers.add(handler);
-    return {
-      remove: () => {
-        this._actionEventSubscribers.delete(handler);
-      },
-    };
-  };
-
-  componentDidUpdate(lastProps) {
-    const lastState = lastProps.nav;
-    this._actionEventSubscribers.forEach(subscriber => {
-      subscriber({
-        lastState: lastProps.nav,
-        state: this.props.nav,
-        action: this.props.lastAction,
-      });
-    });
+  componentDidMount() {
+    initializeListeners('root', this.props.nav);
   }
 
   render() {
@@ -48,7 +32,7 @@ class AppWithNavigationState extends React.Component {
         navigation={addNavigationHelpers({
           dispatch,
           state: nav,
-          addListener: this._addListener,
+          addListener,
         })}
       />
     );
@@ -57,7 +41,6 @@ class AppWithNavigationState extends React.Component {
 
 const mapStateToProps = state => ({
   nav: state.nav,
-  lastAction: state.lastAction,
 });
 
 export default connect(mapStateToProps)(AppWithNavigationState);
